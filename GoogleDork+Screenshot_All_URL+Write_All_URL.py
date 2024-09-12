@@ -2,6 +2,7 @@ import asyncio
 from playwright.async_api import async_playwright
 import re
 from datetime import datetime
+import os
 
 async def main():
     async with async_playwright() as p:
@@ -17,11 +18,16 @@ async def main():
         
         page_index = 1
         date_str = datetime.now().strftime("%d-%m-%Y")
+        screenshot_folder = f"{date_str}-Screenshot"
         output_file = f"{date_str}_URL_Slot.txt"
+        
+        # Buat folder jika belum ada
+        if not os.path.exists(screenshot_folder):
+            os.makedirs(screenshot_folder)
         
         while True:
             await page.wait_for_timeout(10000)  # Tunggu 10 detik sebelum mengambil screenshot
-            await page.screenshot(path=f'screenshot_{domain}_page_{page_index}.png', full_page=True)
+            await page.screenshot(path=f'{screenshot_folder}/screenshot_{domain}_page_{page_index}.png', full_page=True)
             
             # Ambil semua URL di halaman hasil pencarian
             urls = await page.query_selector_all('a[href]')
@@ -35,7 +41,7 @@ async def main():
                         await new_page.wait_for_timeout(5000)  # Tunggu 5 detik sebelum mengambil screenshot
                         # Ambil screenshot dari halaman yang dikunjungi
                         sanitized_url = re.sub(r'[^\w\-_\.]', '_', href)  # Sanitasi nama file
-                        await new_page.screenshot(path=f'{sanitized_url}.png', full_page=True)
+                        await new_page.screenshot(path=f'{screenshot_folder}/{sanitized_url}.png', full_page=True)
                         # Tulis URL ke file teks
                         with open(output_file, 'a') as file:
                             file.write(f"{href}\n")
